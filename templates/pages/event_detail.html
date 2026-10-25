@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, select, error_summary %}
+{% from "macros/ui.html" import breadcrumb, tag_list, alert, badge %}
+{% from "macros/icons.html" import icon %}
+{% set page_title = event.title %}
+{% set page_description = event.summary %}
+{% block og_image %}{{ event.image or "/static/img/og-image.png" }}{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    {{ breadcrumb([("Events", "/events"), (event.title, None)]) }}
+    {% if is_past %}{{ badge("Past event", "muted") }}{% elif event.is_online %}{{ badge("Online") }}{% endif %}
+    <h1 class="mt-4">{{ event.title }}</h1>
+    <ul class="meta-list">
+      <li>{{ icon("calendar", size=18) }} <time datetime="{{ (event.starts_at | ist).isoformat() }}">{{ event.starts_at | datetime }}</time></li>
+      <li>{{ icon("pin", size=18) }} {{ event.location }}</li>
+      {% if event.seats_left is not none and not is_past %}<li>{{ icon("users", size=18) }} {{ event.seats_left }} of {{ event.capacity }} places left</li>{% endif %}
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split split--sidebar">
+    <article class="stack">
+      {% if event.image %}<img class="hero__art" src="{{ event.image }}" alt="{{ event.image_alt }}" width="800" height="600">{% endif %}
+      <p class="lead">{{ event.summary }}</p>
+      <div class="prose">{{ body_html }}</div>
+      {{ tag_list(event.tag_list, label="Event topics") }}
+      <p><a class="icon-link" href="/events/{{ event.slug }}/calendar.ics" download>{{ icon("calendar", size=18) }} Add to my calendar (.ics)</a></p>
+    </article>
+
+    <aside class="form-panel" id="rsvp" aria-labelledby="rsvp-title" tabindex="-1">
+      <h2 id="rsvp-title" class="h3">{{ "This event has ended" if is_past else "Reserve your place" }}</h2>
+      {% if flash %}
+        {% call alert("success") %}<p>{{ flash.message }}</p>{% endcall %}
+      {% endif %}
+      {% if rsvp_error %}
+        {% call alert("error") %}<p>{{ rsvp_error }}</p>{% endcall %}
+      {% endif %}
+      {% if rate_limited %}
+        {% call alert("error", "Too many attempts") %}<p>Please wait a few minutes and try again.</p>{% endcall %}
+      {% endif %}
+      {% if is_past %}
+        <p>Thank you to everyone who came. <a href="/events">See upcoming events</a>.</p>
+      {% elif is_full %}
+        <p>This event is fully booked. <a href="/volunteer">Sign up as a volunteer</a> to hear about the next one first.</p>
+      {% else %}
+      <form class="form" method="post" action="/events/{{ event.slug }}/rsvp" novalidate data-validate>
+        {{ error_summary(errors) }}
+        {% include "partials/form_security.html" %}
+        {{ field("name", "Full name", values.name, error=errors.name, required=True,
+                 attrs={"autocomplete": "name", "maxlength": 80, "minlength": 2, "data-msg-required": messages.name.required, "data-msg-invalid": messages.name.invalid}) }}
+        {{ field("email", "Email address", values.email, type="email", error=errors.email, required=True,
+                 attrs={"autocomplete": "email", "maxlength": 254, "data-kind": "email", "data-msg-required": messages.email.required, "data-msg-invalid": messages.email.invalid, "spellcheck": "false"}) }}
+        {{ select("guests", "Bringing anyone?", [("1", "1 guest"), ("2", "2 guests"), ("3", "3 guests"), ("4", "4 guests")], value=values.guests, error=errors.guests, placeholder="Just me") }}
+        <button class="btn btn--primary btn--block" type="submit" data-submit-label="Reserving…">RSVP{{ " (free)" }}</button>
+        <p class="field__hint mb-0">We'll email you the details and a calendar invite. No spam, ever.</p>
+      </form>
+      {% endif %}
+    </aside>
+  </div>
+</section>
+{% endblock %}

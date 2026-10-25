@@ -11,8 +11,17 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base, utcnow
 
@@ -44,9 +53,21 @@ class Event(Base):
     image_alt: Mapped[str] = mapped_column(String(300), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
+    rsvps: Mapped[list[EventRSVP]] = relationship(
+        back_populates="event", cascade="all, delete-orphan", lazy="selectin"
+    )
+
     @property
     def tag_list(self) -> list[str]:
         return split_tags(self.tags)
+
+    @property
+    def seats_taken(self) -> int:
+        return sum(1 + r.guests for r in self.rsvps)
+
+    @property
+    def seats_left(self) -> int | None:
+        return None if self.capacity is None else max(0, self.capacity - self.seats_taken)
 
     @property
     def short_location(self) -> str:
@@ -58,6 +79,21 @@ class Event(Base):
 
     def is_past(self, now: datetime | None = None) -> bool:
         return self.ends_at < (now or utcnow())
+
+
+class EventRSVP(Base):
+    __tablename__ = "event_rsvps"
+    # One RSVP per email per event; the database enforces it, not just the form.
+    __table_args__ = (UniqueConstraint("event_id", "email", name="uq_rsvp_event_email"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    email: Mapped[str] = mapped_column(String(254))
+    guests: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    event: Mapped[Event] = relationship(back_populates="rsvps")
 
 
 class Post(Base):

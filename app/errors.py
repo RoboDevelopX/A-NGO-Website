@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.templating import render
@@ -34,6 +35,17 @@ def register_error_handlers(app: FastAPI) -> None:
             {"status_code": exc.status_code, "title": title, "message": message},
             status_code=exc.status_code,
             headers=getattr(exc, "headers", None),
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def bad_request(request: Request, exc: RequestValidationError):
+        # FastAPI's default is a JSON 422; visitors should see a page.
+        title, message = _MESSAGES[400]
+        return render(
+            request,
+            "errors/error.html",
+            {"status_code": 400, "title": title, "message": message},
+            status_code=400,
         )
 
     @app.exception_handler(Exception)

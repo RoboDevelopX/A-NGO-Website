@@ -34,7 +34,8 @@ VALID_CONTACT = {
 }
 
 
-def submit(client, url: str, data: dict, **overrides):
-    """Fetch fresh tokens, then POST the form without following the redirect."""
-    payload = {**form_tokens(client, url), **data, **overrides}
+def submit(client, url: str, data: dict, page: str | None = None, **overrides):
+    """Fetch fresh tokens from ``page`` (default: ``url``), then POST without following
+    the redirect."""
+    payload = {**form_tokens(client, page or url), **data, **overrides}
     return client.post(url, data=payload, follow_redirects=False)

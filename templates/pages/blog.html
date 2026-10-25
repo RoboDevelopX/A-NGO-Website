@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "macros/cards.html" import post_card %}
+{% from "macros/ui.html" import pagination %}
+{% set page_title = ("Stories tagged “" ~ tag ~ "”") if tag else ("Stories from the field" ~ (" (page " ~ result.page ~ ")" if result.page > 1 else "")) %}
+{% set page_description = "Stories, data and lessons from " ~ brand.name ~ "'s learning centres in rural Rajasthan and Jharkhand." %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Blog</p>
+    <h1>{% if tag %}Stories tagged “{{ tag }}”{% else %}Stories from the field{% endif %}</h1>
+    <p class="lead">What's working, what isn't, and the children and teachers behind the numbers.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container split split--sidebar">
+    <div>
+      <h2 class="visually-hidden">Posts</h2>
+      <p class="text-muted" aria-live="polite">{{ result.total }} {{ "post" if result.total == 1 else "posts" }}{% if tag %} tagged “{{ tag }}” · <a href="/blog">Show all</a>{% endif %}</p>
+      <div class="grid">
+        {% for post in result.items %}{{ post_card(post, heading_level=3) }}{% endfor %}
+      </div>
+      {{ pagination(result.page, result.total_pages, url_for_page) }}
+    </div>
+    <aside aria-labelledby="tags-title">
+      <h2 id="tags-title" class="h3">Browse by topic</h2>
+      <ul class="tag-list">
+        {% for name, count in tags %}
+        <li><a class="tag" href="/blog?tag={{ name | urlencode }}"{% if name == tag %} aria-current="true"{% endif %}>{{ name }} <span class="visually-hidden">(</span>{{ count }}<span class="visually-hidden"> posts)</span></a></li>
+        {% endfor %}
+      </ul>
+    </aside>
+  </div>
+</section>
+{% endblock %}

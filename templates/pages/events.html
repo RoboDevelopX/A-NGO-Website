@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros/cards.html" import event_card %}
+{% set page_title = "Past events" if when == "past" else "Events" %}
+{% set page_description = "Reading melas, volunteer orientations, camps and fundraisers. Join " ~ brand.name ~ " at an upcoming event." %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Events</p>
+    <h1>Come and see the work for yourself</h1>
+    <p class="lead">Reading melas, teacher open houses, camps and our annual walk. Most events need volunteers, and every one is free.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <nav aria-label="Filter events">
+      <ul class="tabs">
+        <li><a href="/events"{% if when == "upcoming" %} aria-current="page"{% endif %}>Upcoming</a></li>
+        <li><a href="/events?when=past"{% if when == "past" %} aria-current="page"{% endif %}>Past</a></li>
+      </ul>
+    </nav>
+    <h2 class="visually-hidden">{{ "Past events" if when == "past" else "Upcoming events" }}</h2>
+    {% if events %}
+    <div class="grid grid--2">
+      {% for event in events %}{{ event_card(event) }}{% endfor %}
+    </div>
+    {% else %}
+    <p class="lead">{{ "No past events yet." if when == "past" else "No events are scheduled right now. Sign up as a volunteer and we'll tell you about the next one." }}</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

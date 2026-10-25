@@ -330,6 +330,38 @@ class DonationForm(BaseModel):
         return int(self.amount_choice)
 
 
+# --- Event RSVPs ---------------------------------------------------------------
+
+MAX_GUESTS = 4
+FIELD_MESSAGES["guests"] = f"Choose how many people are coming with you (0 to {MAX_GUESTS})"
+
+
+class RSVPForm(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    email: str
+    guests: int = 0
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _validate_name(cls, value: Any) -> str:
+        return validate_name(value)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _validate_email(cls, value: Any) -> str:
+        return validate_email_address(value)
+
+    @field_validator("guests", mode="before")
+    @classmethod
+    def _validate_guests(cls, value: Any) -> int:
+        raw = clean_text(value) or "0"
+        if not raw.isdigit() or not 0 <= int(raw) <= MAX_GUESTS:
+            raise _err("guests", FIELD_MESSAGES["guests"])
+        return int(raw)
+
+
 def friendly_errors(exc: ValidationError) -> dict[str, str]:
     """Map a ValidationError to {field: message}, one message per field, in field order."""
     errors: dict[str, str] = {}

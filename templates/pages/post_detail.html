@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import breadcrumb, tag_list, button %}
+{% from "macros/cards.html" import post_card %}
+{% set page_title = post.title %}
+{% set page_description = post.excerpt %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{{ post.image or "/static/img/og-image.png" }}{% endblock %}
+{% block content %}
+<article>
+  <header class="page-hero">
+    <div class="container container--narrow">
+      {{ breadcrumb([("Blog", "/blog"), (post.title, None)]) }}
+      <h1>{{ post.title }}</h1>
+      <ul class="meta-list">
+        <li>By {{ post.author }}{% if post.author_role %}, {{ post.author_role }}{% endif %}</li>
+        <li><time datetime="{{ post.published_at.date().isoformat() }}">{{ post.published_at | date }}</time></li>
+        <li>{{ post.body | reading_time }} min read</li>
+      </ul>
+    </div>
+  </header>
+  <div class="section">
+    <div class="container container--narrow stack">
+      {% if post.image %}<img class="hero__art" src="{{ post.image }}" alt="{{ post.image_alt }}" width="800" height="600">{% endif %}
+      <p class="lead">{{ post.excerpt }}</p>
+      <div class="prose">{{ body_html }}</div>
+      {{ tag_list(post.tag_list, base_url="/blog?tag=", label="Post topics") }}
+      <div class="form-panel cluster">
+        <p class="mb-0"><strong>Liked this story?</strong> Help us write the next one.</p>
+        {{ button("Donate", href="/donate", variant="accent", size="sm") }}
+        {{ button("Volunteer", href="/volunteer", variant="outline", size="sm") }}
+      </div>
+    </div>
+  </div>
+</article>
+{% if related %}
+<section class="section section--tint" aria-labelledby="related-title">
+  <div class="container">
+    <h2 id="related-title">You might also like</h2>
+    <div class="grid grid--3 mt-6">
+      {% for item in related %}{{ post_card(item) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

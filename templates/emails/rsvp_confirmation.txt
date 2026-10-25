@@ -1,0 +1,13 @@
+Hi {{ first_name }},
+
+You're registered for {{ event.title }}{% if guests %} with {{ guests }} guest{{ "s" if guests > 1 else "" }}{% endif %}.
+
+When:  {{ when }}
+Where: {{ event.location }}
+
+Add it to your calendar: {{ calendar_url }}
+
+If your plans change, just reply to this email so we can offer your place to someone else.
+
+See you there,
+{{ brand_name }}
