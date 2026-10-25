@@ -1,0 +1,12 @@
+Hi {{ first_name }},
+
+Thanks for getting in touch with {{ brand_name }} about "{{ topic_label }}".
+We read every message and usually reply within 3 working days.
+
+(For your privacy, and to stop this form being misused, we don't repeat your message here.)
+
+If you did not contact us, you can safely ignore this email.
+
+Warm regards,
+{{ brand_name }}
+{{ site_url }}

@@ -18,8 +18,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import BASE_DIR, BRAND, Settings, get_settings
 from app.db import Database
 from app.errors import register_error_handlers
-from app.routes import pages, seo
-from app.security import SecureHeadersMiddleware
+from app.routes import forms, pages, seo
+from app.security import RateLimiter, SecureHeadersMiddleware
+from app.services.email import build_email_service
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
@@ -39,6 +40,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.db = Database(settings.database_url)
+    app.state.email_service = build_email_service(settings)
+    app.state.rate_limiter = RateLimiter(
+        settings.rate_limit_max, settings.rate_limit_window_seconds
+    )
 
     # Starlette sessions are signed (not encrypted) cookies; we only store ids and tokens in them.
     app.add_middleware(
@@ -53,7 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(SecureHeadersMiddleware, hsts=settings.is_production)
 
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
-    for router in (pages.router, seo.router):
+    for router in (pages.router, forms.router, seo.router):
         app.include_router(router)
     register_error_handlers(app)
     return app

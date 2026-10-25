@@ -1,0 +1,5 @@
+{# Included (not imported) so it can read `request` from the page context. #}
+{% from "macros/forms.html" import honeypot %}
+<input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+<input type="hidden" name="form_nonce" value="{{ new_form_nonce() }}">
+{{ honeypot() }}

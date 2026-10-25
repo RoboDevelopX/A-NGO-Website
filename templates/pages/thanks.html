@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import button %}
+{% from "macros/cards.html" import event_card %}
+{% set page_title = "Thank you" %}
+{% block content %}
+<section class="page-hero">
+  <div class="container container--narrow">
+    <p class="eyebrow">{{ "Volunteer sign-up received" if kind == "volunteer" else "Message received" }}</p>
+    <h1>Thank you{% if first_name %}, {{ first_name }}{% endif %}!</h1>
+    {% if kind == "volunteer" %}
+    <p class="lead">We've emailed you a confirmation. A volunteer coordinator will be in touch within 3 working days.</p>
+    {% else %}
+    <p class="lead">We've emailed you a confirmation and will reply within 3 working days.</p>
+    {% endif %}
+  </div>
+</section>
+{% if suggested_events %}
+<section class="section" aria-labelledby="suggested-title">
+  <div class="container">
+    <h2 id="suggested-title">{{ suggested_title or "Upcoming events you could join" }}</h2>
+    {% if suggested_note %}<p class="lead">{{ suggested_note }}</p>{% endif %}
+    <div class="grid grid--3 mt-6">
+      {% for item in suggested_events %}
+      <div class="stack">
+        {{ event_card(item.event if item.event is defined else item) }}
+        {% if item.reasons is defined and item.reasons %}<p class="field__hint mt-0">Why we suggested this: {{ item.reasons | join("; ") }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+<section class="section section--tint">
+  <div class="container cluster">
+    {{ button("Back to the homepage", href="/", variant="outline") }}
+    {{ button("Read stories from the field", href="/blog", variant="primary") }}
+  </div>
+</section>
+{% endblock %}

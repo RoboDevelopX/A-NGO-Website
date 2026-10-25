@@ -1,0 +1,20 @@
+Hi {{ first_name }},
+
+Thank you for offering to volunteer with {{ brand_name }}. We have received your details.
+
+You told us you'd like to help with:
+{% for label in interest_labels %}  - {{ label }}
+{% endfor %}
+Availability: {{ availability_label }}
+
+What happens next
+1. A volunteer coordinator will reply within 3 working days.
+2. You'll be invited to a 90-minute online orientation.
+3. For roles with children in person, we'll ask you to complete our child safeguarding
+   training and a background check before your first session.
+
+If you did not sign up, you can ignore this email and we will not contact you again.
+
+With thanks,
+The volunteer team at {{ brand_name }}
+{{ site_url }}

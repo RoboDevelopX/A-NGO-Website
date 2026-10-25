@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base, utcnow
@@ -78,3 +78,42 @@ class Post(Base):
     @property
     def tag_list(self) -> list[str]:
         return split_tags(self.tags)
+
+
+class Submission(Base):
+    """A volunteer sign-up or a contact message. One table, distinguished by ``kind``."""
+
+    __tablename__ = "submissions"
+
+    STATUSES = ("new", "contacted", "archived")
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20), index=True)  # "volunteer" | "contact"
+    name: Mapped[str] = mapped_column(String(80))
+    email: Mapped[str] = mapped_column(String(254), index=True)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    interests: Mapped[str] = mapped_column(String(300), default="")
+    availability: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    topic: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    message: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="new", index=True)
+    is_spam: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    spam_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # A keyed hash, not the raw IP: enough to spot abuse patterns, useless if leaked.
+    ip_hash: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+    @property
+    def interest_list(self) -> list[str]:
+        return split_tags(self.interests)
+
+
+class FormToken(Base):
+    """One-time form nonces. A unique primary key makes duplicate submits fail atomically."""
+
+    __tablename__ = "form_tokens"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

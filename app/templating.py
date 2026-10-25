@@ -16,6 +16,7 @@ from app.formatting import (
     reading_time_minutes,
     to_ist,
 )
+from app.security import get_csrf_token, new_form_nonce
 
 # (label, path). Donate is rendered separately as the primary CTA.
 NAV_ITEMS: list[tuple[str, str]] = [
@@ -55,6 +56,8 @@ env.filters["datetime"] = format_datetime
 env.filters["reading_time"] = reading_time_minutes
 env.filters["ist"] = to_ist
 env.globals["is_active"] = _is_active
+env.globals["csrf_token"] = get_csrf_token
+env.globals["new_form_nonce"] = new_form_nonce
 
 
 def render(request: Request, name: str, context: dict | None = None, status_code: int = 200, **kw):

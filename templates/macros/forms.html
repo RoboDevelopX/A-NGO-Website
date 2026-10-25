@@ -37,14 +37,14 @@
 </div>
 {% endmacro %}
 
-{% macro select(name, label, options, value=None, error=None, required=False, hint=None, placeholder="Choose one") %}
+{% macro select(name, label, options, value=None, error=None, required=False, hint=None, placeholder="Choose one", attrs={}) %}
 {# options: list of (value, label) #}
 <div class="field{% if error %} field--invalid{% endif %}">
   {{ _label(name, label, required) }}
   {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
   {{ _error(name, error) }}
   <select class="select" id="f-{{ name }}" name="{{ name }}"
-          aria-describedby="{{ _describedby(name, hint, error) }}"{% if required %} required{% endif %}{% if error %} aria-invalid="true"{% endif %}>
+          aria-describedby="{{ _describedby(name, hint, error) }}"{% if required %} required{% endif %}{% if error %} aria-invalid="true"{% endif %}{{ attrs | xmlattr }}>
     <option value="">{{ placeholder }}</option>
     {% for opt_value, opt_label in options %}
     <option value="{{ opt_value }}"{% if opt_value == value %} selected{% endif %}>{{ opt_label }}</option>
@@ -53,11 +53,11 @@
 </div>
 {% endmacro %}
 
-{% macro choice_group(name, legend, options, selected=[], type="checkbox", error=None, required=False, hint=None) %}
+{% macro choice_group(name, legend, options, selected=[], type="checkbox", error=None, required=False, hint=None, attrs={}) %}
 {# options: list of (value, label, hint_or_none). The first input gets id f-<name> so the
    error summary can link to the group. #}
 <fieldset class="fieldset{% if error %} fieldset--invalid{% endif %}" data-choice-group="{{ name }}"{% if required %} data-required="true"{% endif %}
-          aria-describedby="{{ _describedby(name, hint, error) }}">
+          aria-describedby="{{ _describedby(name, hint, error) }}"{{ attrs | xmlattr }}>
   <legend class="fieldset__legend">{{ legend }}{% if not required %} <span class="field__optional">(optional)</span>{% endif %}</legend>
   {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
   {{ _error(name, error) }}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, textarea, select, choice_group, error_summary %}
+{% from "macros/ui.html" import alert %}
+{% set page_title = "Volunteer with us" %}
+{% set page_description = "Teach a reading group, mentor girls, support events or help remotely. Sign up to volunteer with " ~ brand.name ~ "." %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Get involved</p>
+    <h1>Volunteer with us</h1>
+    <p class="lead">Give a few hours a month to help a child read. Tell us what you enjoy and when you're free, and we'll suggest where to start.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split split--sidebar">
+    <div class="form-panel">
+      {% if rate_limited %}
+      {% call alert("error", "Too many attempts") %}<p>You've sent this form several times in a short while. Please wait a few minutes and try again; your answers are saved below.</p>{% endcall %}
+      {% endif %}
+      <form class="form" method="post" action="/volunteer" novalidate data-validate>
+        {{ error_summary(errors) }}
+        {% include "partials/form_security.html" %}
+        <div class="form-row">
+          {{ field("name", "Full name", values.name, error=errors.name, required=True,
+                   attrs={"autocomplete": "name", "maxlength": 80, "data-msg-required": messages.name.required, "data-msg-invalid": messages.name.invalid, "minlength": 2}) }}
+          {{ field("email", "Email address", values.email, type="email", error=errors.email, required=True,
+                   attrs={"autocomplete": "email", "maxlength": 254, "data-kind": "email", "data-msg-required": messages.email.required, "data-msg-invalid": messages.email.invalid, "spellcheck": "false"}) }}
+        </div>
+        {{ field("phone", "Phone number", values.phone, type="tel", error=errors.phone, hint="So we can call you about urgent changes to an event.",
+                 attrs={"autocomplete": "tel", "inputmode": "tel", "maxlength": 20, "data-kind": "phone", "data-msg-invalid": messages.phone.invalid}) }}
+        {{ choice_group("interests", "How would you like to help?", interest_options, selected=values.interests, error=errors.interests, required=True,
+                        hint="Choose as many as you like.", attrs={"data-msg-required": messages.interests.required}) }}
+        {{ select("availability", "When are you usually available?", availability_options, value=values.availability, error=errors.availability, required=True,
+                  attrs={"data-msg-required": messages.availability.required}) }}
+        {{ textarea("message", "Tell us about yourself", values.message, error=errors.message, required=True,
+                    hint="A sentence or two about your background and why you'd like to volunteer.",
+                    attrs={"minlength": message_min, "maxlength": message_max, "data-msg-required": messages.message.required, "data-msg-short": messages.message.volunteer_short, "data-msg-long": messages.message.long}) }}
+        <p class="field__hint">We only use your details to organise volunteering. See how we handle data in our <a href="/about#funds">transparency section</a>.</p>
+        <div>
+          <button class="btn btn--primary btn--lg" type="submit" data-submit-label="Sending…">Sign up to volunteer</button>
+        </div>
+      </form>
+    </div>
+    <aside class="stack" aria-labelledby="next-title">
+      <h2 id="next-title" class="h3">What happens next</h2>
+      <ol class="stack">
+        <li>A volunteer coordinator replies within 3 working days.</li>
+        <li>You join a 90-minute online orientation.</li>
+        <li>For in-person roles with children, you complete our safeguarding training and a background check.</li>
+        <li>You're matched to a centre, an event or a remote project.</li>
+      </ol>
+      <p class="text-muted">Prefer to just ask a question? <a href="/contact">Contact us</a>.</p>
+    </aside>
+  </div>
+</section>
+{% endblock %}
