@@ -1,0 +1,96 @@
+{# Accessible form controls. Each field renders its label, optional hint, an error slot and
+   the control, wired together with aria-describedby so screen readers announce errors.
+   The same error slots are filled by static/js/forms.js for client-side validation. #}
+
+{% macro _describedby(name, hint, error) -%}
+{%- set ids = [] -%}
+{%- if hint %}{% set _ = ids.append("f-" ~ name ~ "-hint") %}{% endif -%}
+{%- set _ = ids.append("f-" ~ name ~ "-error") -%}
+{{ ids | join(" ") }}
+{%- endmacro %}
+
+{% macro _label(name, label, required) %}
+<label class="field__label" for="f-{{ name }}">{{ label }}{% if not required %} <span class="field__optional">(optional)</span>{% endif %}</label>
+{% endmacro %}
+
+{% macro _error(name, error) %}
+<span class="field__error" id="f-{{ name }}-error">{% if error %}<span class="visually-hidden">Error: </span>{{ error }}{% endif %}</span>
+{% endmacro %}
+
+{% macro field(name, label, value="", type="text", error=None, required=False, hint=None, attrs={}) %}
+<div class="field{% if error %} field--invalid{% endif %}">
+  {{ _label(name, label, required) }}
+  {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
+  {{ _error(name, error) }}
+  <input class="input" id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value if value is not none else '' }}"
+         aria-describedby="{{ _describedby(name, hint, error) }}"{% if required %} required{% endif %}{% if error %} aria-invalid="true"{% endif %}{{ attrs | xmlattr }}>
+</div>
+{% endmacro %}
+
+{% macro textarea(name, label, value="", error=None, required=False, hint=None, rows=6, attrs={}) %}
+<div class="field{% if error %} field--invalid{% endif %}">
+  {{ _label(name, label, required) }}
+  {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
+  {{ _error(name, error) }}
+  <textarea class="textarea" id="f-{{ name }}" name="{{ name }}" rows="{{ rows }}"
+            aria-describedby="{{ _describedby(name, hint, error) }}"{% if required %} required{% endif %}{% if error %} aria-invalid="true"{% endif %}{{ attrs | xmlattr }}>{{ value if value is not none else '' }}</textarea>
+</div>
+{% endmacro %}
+
+{% macro select(name, label, options, value=None, error=None, required=False, hint=None, placeholder="Choose one") %}
+{# options: list of (value, label) #}
+<div class="field{% if error %} field--invalid{% endif %}">
+  {{ _label(name, label, required) }}
+  {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
+  {{ _error(name, error) }}
+  <select class="select" id="f-{{ name }}" name="{{ name }}"
+          aria-describedby="{{ _describedby(name, hint, error) }}"{% if required %} required{% endif %}{% if error %} aria-invalid="true"{% endif %}>
+    <option value="">{{ placeholder }}</option>
+    {% for opt_value, opt_label in options %}
+    <option value="{{ opt_value }}"{% if opt_value == value %} selected{% endif %}>{{ opt_label }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro choice_group(name, legend, options, selected=[], type="checkbox", error=None, required=False, hint=None) %}
+{# options: list of (value, label, hint_or_none). The first input gets id f-<name> so the
+   error summary can link to the group. #}
+<fieldset class="fieldset{% if error %} fieldset--invalid{% endif %}" data-choice-group="{{ name }}"{% if required %} data-required="true"{% endif %}
+          aria-describedby="{{ _describedby(name, hint, error) }}">
+  <legend class="fieldset__legend">{{ legend }}{% if not required %} <span class="field__optional">(optional)</span>{% endif %}</legend>
+  {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
+  {{ _error(name, error) }}
+  <div class="choice-grid">
+    {% for opt_value, opt_label, opt_hint in options %}
+    {% set input_id = "f-" ~ name if loop.first else "f-" ~ name ~ "-" ~ loop.index0 %}
+    <label class="choice" for="{{ input_id }}">
+      <input type="{{ type }}" id="{{ input_id }}" name="{{ name }}" value="{{ opt_value }}"{% if opt_value in selected %} checked{% endif %}{% if error %} aria-invalid="true"{% endif %}>
+      <span>{{ opt_label }}{% if opt_hint %}<span class="choice__hint">{{ opt_hint }}</span>{% endif %}</span>
+    </label>
+    {% endfor %}
+  </div>
+</fieldset>
+{% endmacro %}
+
+{% macro error_summary(errors) %}
+{# Shown at the top of a form after a failed server-side submit; focused by forms.js. #}
+{% if errors %}
+<div class="error-summary" role="alert" tabindex="-1" data-error-summary>
+  <h2>There {{ "is a problem" if errors | length == 1 else "are " ~ (errors | length) ~ " problems" }} with your form</h2>
+  <ul>
+    {% for field_name, message in errors.items() %}
+    <li><a href="#f-{{ field_name }}">{{ message }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro honeypot() %}
+{# Bots fill every field; people never see this one. Not a security boundary on its own. #}
+<div class="hp-field" aria-hidden="true">
+  <label for="f-website">Leave this field empty</label>
+  <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off" value="">
+</div>
+{% endmacro %}

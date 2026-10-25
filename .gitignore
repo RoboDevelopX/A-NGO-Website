@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+# Generated at setup time (see Makefile): database, spam dataset/model, dev email outbox.
+data/*.db
+data/*.db-*
+data/spam_dataset.csv
+data/spam_model.joblib
+data/spam_model.json
+outbox/*
+!outbox/.gitkeep
+.DS_Store

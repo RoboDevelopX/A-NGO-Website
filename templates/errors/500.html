@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set page_title = "Something went wrong" %}
+{% set noindex = true %}
+{% block content %}
+<section class="section">
+  <div class="container container--narrow text-center">
+    <p class="eyebrow">Error 500</p>
+    <h1>{{ title }}</h1>
+    <p class="lead">The problem has been logged. Please try again in a few minutes.</p>
+    <p class="mt-6"><a class="btn btn--primary" href="/">Go to the homepage</a></p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,70 @@
+{# Layout and display macros shared by every page. #}
+
+{% macro section_header(title, eyebrow=None, lead=None, center=False, level=2, id=None) %}
+<div class="section-header{% if center %} section-header--center{% endif %}">
+  {% if eyebrow %}<p class="eyebrow">{{ eyebrow }}</p>{% endif %}
+  <h{{ level }}{% if id %} id="{{ id }}"{% endif %}>{{ title }}</h{{ level }}>
+  {% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro button(label, href=None, variant="primary", size=None, type="button", attrs={}) %}
+{% set cls = "btn btn--" ~ variant ~ (" btn--" ~ size if size else "") %}
+{% if href %}
+<a class="{{ cls }}" href="{{ href }}"{{ attrs | xmlattr }}>{{ label }}</a>
+{% else %}
+<button class="{{ cls }}" type="{{ type }}"{{ attrs | xmlattr }}>{{ label }}</button>
+{% endif %}
+{% endmacro %}
+
+{% macro badge(label, variant=None) %}
+<span class="badge{% if variant %} badge--{{ variant }}{% endif %}">{{ label }}</span>
+{% endmacro %}
+
+{% macro alert(variant="info", title=None) %}
+<div class="alert alert--{{ variant }}"{% if variant == "error" %} role="alert"{% else %} role="status"{% endif %}>
+  {% if title %}<p><strong>{{ title }}</strong></p>{% endif %}
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro breadcrumb(items) %}
+{# items: list of (label, href); the last item is the current page. #}
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <ol>
+    {% for label, href in items %}
+    {% if loop.last %}<li aria-current="page">{{ label }}</li>
+    {% else %}<li><a href="{{ href }}">{{ label }}</a></li>{% endif %}
+    {% endfor %}
+  </ol>
+</nav>
+{% endmacro %}
+
+{% macro tag_list(tags, base_url=None, current=None, label="Tags") %}
+<ul class="tag-list" aria-label="{{ label }}">
+  {% for tag in tags %}
+  <li>
+    {% if base_url %}<a class="tag" href="{{ base_url }}{{ tag | urlencode }}"{% if tag == current %} aria-current="true"{% endif %}>{{ tag }}</a>
+    {% else %}<span class="tag">{{ tag }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro pagination(page, total_pages, url_for_page) %}
+{# url_for_page: a callable that builds the URL for a page number, so filters are preserved. #}
+{% if total_pages > 1 %}
+<nav aria-label="Pagination">
+  <ul class="pagination">
+    {% if page > 1 %}<li><a href="{{ url_for_page(page - 1) }}" rel="prev">Previous<span class="visually-hidden"> page</span></a></li>{% endif %}
+    {% for n in range(1, total_pages + 1) %}
+    <li>
+      {% if n == page %}<span aria-current="page"><span class="visually-hidden">Page </span>{{ n }}</span>
+      {% else %}<a href="{{ url_for_page(n) }}"><span class="visually-hidden">Page </span>{{ n }}</a>{% endif %}
+    </li>
+    {% endfor %}
+    {% if page < total_pages %}<li><a href="{{ url_for_page(page + 1) }}" rel="next">Next<span class="visually-hidden"> page</span></a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %}

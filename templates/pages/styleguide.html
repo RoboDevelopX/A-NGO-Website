@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import section_header, button, badge, alert, tag_list %}
+{% from "macros/forms.html" import field, textarea, select, choice_group, error_summary %}
+{% from "macros/icons.html" import icon %}
+{% set page_title = "Style guide" %}
+{% set noindex = true %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Design system</p>
+    <h1>Style guide</h1>
+    <p class="lead">Every component on the site, in one place. Colours come from <code>BRAND</code> in <code>app/config.py</code>.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container stack">
+    {{ section_header("Colour", eyebrow="Tokens") }}
+    <ul class="grid grid--4" aria-label="Colour swatches">
+      {% for token, value in [("primary", brand.colors.primary), ("primary-dark", brand.colors.primary_dark), ("primary-light", brand.colors.primary_light), ("accent", brand.colors.accent), ("ink", brand.colors.ink), ("muted", brand.colors.muted), ("bg", brand.colors.background), ("error", brand.colors.error)] %}
+      <li class="card"><div class="swatch swatch--{{ token }}"></div><div class="card__body"><strong>--color-{{ token }}</strong><code>{{ value }}</code></div></li>
+      {% endfor %}
+    </ul>
+
+    {{ section_header("Typography", eyebrow="Tokens") }}
+    <h1>Heading one</h1>
+    <h2>Heading two</h2>
+    <h3>Heading three</h3>
+    <p class="lead">Lead paragraph for introductions.</p>
+    <p>Body copy. Children in our centres read for 45 minutes a day, in their home language first and then in Hindi and English.</p>
+
+    {{ section_header("Buttons and badges", eyebrow="Components") }}
+    <div class="cluster">
+      {{ button("Donate", href="#", variant="accent") }}
+      {{ button("Volunteer", href="#", variant="primary") }}
+      {{ button("Learn more", href="#", variant="outline") }}
+      {{ button("Small", href="#", variant="primary", size="sm") }}
+      {{ button("Disabled", variant="primary", attrs={"disabled": true}) }}
+    </div>
+    <div class="cluster">
+      {{ badge("New") }} {{ badge("Demo", "accent") }} {{ badge("Archived", "muted") }}
+      {{ badge("Paid", "success") }} {{ badge("Spam", "error") }}
+    </div>
+    {{ tag_list(["literacy", "girls-education", "teachers"], base_url="#") }}
+    <div class="cluster" aria-label="Icons">
+      {% for name in ["book", "teacher", "girl", "laptop", "library", "heart", "calendar", "pin", "clock", "users"] %}
+      <span class="card__icon">{{ icon(name, label=name) }}</span>
+      {% endfor %}
+    </div>
+
+    {{ section_header("Alerts", eyebrow="Components") }}
+    {% call alert("success", "Thank you!") %}<p>Your message has been received.</p>{% endcall %}
+    {% call alert("warning", "Demo mode") %}<p>No real payment is processed.</p>{% endcall %}
+    {% call alert("error", "Payment declined") %}<p>Please try a different amount.</p>{% endcall %}
+
+    {{ section_header("Forms", eyebrow="Components") }}
+    <div class="form-panel form">
+      {{ error_summary({"email": "Enter an email address in the correct format, like name@example.com"}) }}
+      {{ field("sg_name", "Full name", required=True, hint="As you'd like us to address you") }}
+      {{ field("email", "Email", type="email", value="priya@", required=True, error="Enter an email address in the correct format, like name@example.com") }}
+      {{ select("sg_availability", "Availability", [("weekdays", "Weekdays"), ("weekends", "Weekends")], required=True) }}
+      {{ choice_group("sg_interests", "Interests", [("teaching", "Teaching", "Reading and maths support"), ("events", "Event support", None)], selected=["teaching"]) }}
+      {{ textarea("sg_message", "Message", rows=3) }}
+    </div>
+  </div>
+</section>
+{% endblock %}

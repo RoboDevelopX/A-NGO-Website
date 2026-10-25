@@ -1,0 +1,50 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="grid grid--4">
+      <div>
+        <a class="logo" href="/">
+          {% include "partials/logo.html" %}
+          <span class="visually-hidden">{{ brand.name }} home</span>
+        </a>
+        <p class="mt-4">{{ brand.tagline }}</p>
+        <p>{{ brand.registration }}</p>
+      </div>
+      <nav aria-labelledby="footer-explore">
+        <h2 id="footer-explore">Explore</h2>
+        <ul>
+          <li><a href="/about">About us</a></li>
+          <li><a href="/about#funds">How funds are used</a></li>
+          <li><a href="/events">Events</a></li>
+          <li><a href="/blog">Stories from the field</a></li>
+        </ul>
+      </nav>
+      <nav aria-labelledby="footer-involved">
+        <h2 id="footer-involved">Get involved</h2>
+        <ul>
+          <li><a href="/donate">Donate</a></li>
+          <li><a href="/volunteer">Volunteer</a></li>
+          <li><a href="/contact">Partner with us</a></li>
+          <li><a href="/donate#other-ways">Other ways to give</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h2>Contact</h2>
+        <address>
+          <ul>
+            <li>{{ brand.address }}</li>
+            <li><a href="mailto:{{ brand.email }}">{{ brand.email }}</a></li>
+            <li>{{ brand.phone }}</li>
+          </ul>
+        </address>
+        <ul class="cluster mt-4" aria-label="Social media">
+          {% for name, url in brand.social.items() %}
+          <li><a href="{{ url }}" rel="noopener">{{ name }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <p class="mb-0">&copy; {{ current_year }} {{ brand.name }}. A fictional organisation built as a portfolio project; no real donations are accepted.</p>
+    </div>
+  </div>
+</footer>

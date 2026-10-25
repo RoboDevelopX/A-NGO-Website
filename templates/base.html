@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {# Child templates set page_title / page_description at top level (outside blocks). #}
+  {% set full_title = (page_title ~ " | " ~ brand.name) if page_title is defined else (brand.name ~ ": " ~ brand.tagline) %}
+  {% set meta_description = page_description if page_description is defined else brand.description %}
+  <title>{{ full_title }}</title>
+  <meta name="description" content="{{ meta_description }}">
+  <link rel="canonical" href="{{ canonical_url }}">
+  {% if noindex is defined and noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:site_name" content="{{ brand.name }}">
+  <meta property="og:title" content="{{ full_title }}">
+  <meta property="og:description" content="{{ meta_description }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:image" content="{{ site_url }}{% block og_image %}/static/img/og-image.png{% endblock %}">
+  <meta property="og:locale" content="en_IN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="{{ brand.colors.primary }}">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <script src="/static/js/js-detect.js"></script>
+  <script src="/static/js/main.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  {% block banner %}{% endblock %}
+  {% include "partials/header.html" %}
+  <main id="main" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "partials/footer.html" %}
+</body>
+</html>

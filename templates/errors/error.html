@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set page_title = title %}
+{% set noindex = true %}
+{% block content %}
+<section class="section">
+  <div class="container container--narrow text-center">
+    <p class="eyebrow">Error {{ status_code }}</p>
+    <h1>{{ title }}</h1>
+    <p class="lead">{{ message }}</p>
+    <p class="mt-6"><a class="btn btn--primary" href="/">Go to the homepage</a></p>
+  </div>
+</section>
+{% endblock %}
