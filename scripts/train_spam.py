@@ -2,8 +2,10 @@
 
 Usage: python -m scripts.train_spam [--threshold 0.8]
 
-1. Evaluate on held-out *templates* and print the metrics.
-2. Refit on all data and save data/spam_model.joblib (+ .json with the metrics).
+1. Grouped cross-validation (each template held out once); print the metrics.
+2. Print the same metrics with the optional text-statistics features, for comparison.
+3. Refit on all data, print hand-written sanity checks, and save
+   data/spam_model.joblib (+ .json with the metrics).
 """
 
 from __future__ import annotations
@@ -13,8 +15,8 @@ import csv
 from pathlib import Path
 
 from app.config import get_settings
-from app.ml.spam import evaluate, save_model, train
-from app.ml.spam_data import Sample
+from app.ml.spam import SpamClassifier, evaluate, save_model, train
+from app.ml.spam_data import HANDWRITTEN_HAM, HANDWRITTEN_SPAM, Sample, classifier_text
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "spam_dataset.csv"
@@ -38,18 +40,31 @@ def main(argv: list[str] | None = None) -> None:
     samples = load_samples(args.data)
     result = evaluate(samples, threshold=args.threshold)
     (tn, fp), (fn, tp) = result.confusion
-    print("Held-out evaluation (unseen templates; synthetic data, so treat as optimistic):")
-    print(f"  train={result.n_train} test={result.n_test} threshold={result.threshold}")
+    print(f"Grouped {result.n_folds}-fold cross-validation on {result.n_samples} synthetic samples")
+    print("(every template scored by a model that never saw it; still optimistic):")
     print(f"  precision={result.precision} recall={result.recall} f1={result.f1}")
-    print(f"  roc_auc={result.roc_auc}")
-    print(f"  confusion: tn={tn} fp={fp} fn={fn} tp={tp}")
-    print(f"  held-out templates: {', '.join(result.test_templates)}")
+    print(f"  roc_auc={result.roc_auc}  confusion: tn={tn} fp={fp} fn={fn} tp={tp}")
     print("  threshold  precision  recall")
     for t, p, r in result.threshold_table:
         marker = "  <- in use" if t == result.threshold else ""
         print(f"  {t:>9}  {p:>9}  {r:>6}{marker}")
+    hardest = ", ".join(f"{t} ({rate:.0%})" for t, rate in result.hardest_templates)
+    print(f"  hardest unseen templates: {hardest or 'none'}")
+
+    with_stats = evaluate(samples, threshold=args.threshold, use_text_stats=True)
+    print("Comparison with the hand-made text statistics switched on:")
+    print(
+        f"  precision={with_stats.precision} recall={with_stats.recall} "
+        f"roc_auc={with_stats.roc_auc}"
+    )
 
     model = train(samples)
+    classifier = SpamClassifier(model)
+    print("Hand-written sanity checks (never trained on):")
+    for label, examples in (("ham ", HANDWRITTEN_HAM), ("spam", HANDWRITTEN_SPAM)):
+        for name, message in examples:
+            score = classifier.score(classifier_text(name, message))
+            print(f"  {label} {score:.3f}  {message[:70]}")
     save_model(model, args.out, result)
     print(f"Saved model to {args.out}")
 

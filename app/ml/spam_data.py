@@ -48,6 +48,9 @@ ACTIVITIES = ["teaching reading", "maths tutoring", "mentoring girls", "running 
               "fundraising", "data entry", "worksheet design"]  # fmt: skip
 DAYS = ["weekends", "Saturday mornings", "weekday evenings", "Sundays", "two days a month",
         "after 6 pm on weekdays", "during my summer break"]  # fmt: skip
+COMPANIES = ["company", "firm", "bank", "school trust", "family foundation", "startup"]
+ACRONYMS = ["CSR", "NSS", "NCC", "IIT", "HR", "IT"]
+MONTHS = ["January", "March", "June", "August", "October", "December"]
 ORGS = ["our company", "our school", "my college NSS unit", "our Rotary club",
         "our CSR team", "my office volunteering group"]  # fmt: skip
 
@@ -82,6 +85,11 @@ HAM_TEMPLATES: dict[str, str] = {
     "ham_feedback": "Loved the post about teaching at the right level! We use something similar at {org}. Would love to compare notes.",
     "ham_tech": "I'm a {job} and can help set up offline Scratch on your tablets. I have done this for {n} schools before.",
     "ham_price": "Our printing press can print {n}00 workbooks at cost price (around Rs {amount}). Would that help your centres?",
+    # Short, formal messages with acronyms, years and phone numbers. Without these the model
+    # learned that "short + capitals + digits" means spam (see TextStatsTransformer).
+    "ham_short_csr": "Our {company} would like to discuss {acronym} support for {year}.",
+    "ham_call_me": "Please call me on +91 {phone} after 6 pm. I can help with {activity}.",
+    "ham_visit": "Can our {acronym} group visit the {city} centre in {month} {year}?",
 }
 
 SPAM_TEMPLATES: dict[str, str] = {
@@ -129,6 +137,10 @@ def _fill(template: str, rng: random.Random) -> str:
         "pct": rng.randint(2, 9),
         "phone": f"{rng.randint(200, 999)} {rng.randint(100, 999)} {rng.randint(1000, 9999)}",
         "handle": rng.choice(["earnfast", "richquick", "moneybot", "cryptoguru"]),
+        "company": rng.choice(COMPANIES),
+        "acronym": rng.choice(ACRONYMS),
+        "year": rng.randint(2026, 2028),
+        "month": rng.choice(MONTHS),
     }
     return template.format(**values)
 
@@ -137,6 +149,34 @@ def _name(label: int, rng: random.Random) -> str:
     if label == SPAM and rng.random() < 0.4:
         return rng.choice(SPAM_NAMES)
     return f"{rng.choice(FIRST_NAMES)} {rng.choice(LAST_NAMES)}"
+
+
+# Hand-written messages that never go into training: a quick sanity check printed by
+# scripts/train_spam.py and asserted in the tests. They were written while fixing the
+# false positive described in TextStatsTransformer, so they are a *development* check,
+# not an unbiased test set.
+HANDWRITTEN_HAM: list[tuple[str, str]] = [
+    ("Rohan Gupta", "Our company would like to discuss CSR in 2027."),
+    ("Anita Desai", "Can I visit one of your learning centres next month with my students?"),
+    ("Kiran Shah", "How do I get a tax receipt for my donation?"),
+    (
+        "Sunil Verma",
+        "We are a small business in Jaipur and want to sponsor school bags for 50 children.",
+    ),
+    ("Meera Iyer", "Is there a volunteering opportunity for college students in Ranchi?"),
+    ("Fatima Khan", "I'd like to set up a monthly donation. What's the best way?"),
+    ("Arjun Nair", "Our team of 12 engineers wants to spend a day at a centre. Is that possible?"),
+    ("Pooja Rao", "Please call me on 98290 12345. I can teach English on Sundays."),
+]
+HANDWRITTEN_SPAM: list[tuple[str, str]] = [
+    (
+        "Web Solutions",
+        "We build websites for NGOs at the lowest price. Visit http://quickloan-now.biz",
+    ),
+    ("Mark", "URGENT business proposal. Kindly send your bank details to receive USD 4.5 million."),
+    ("Crypto Desk", "Double your money in 7 days!!! Guaranteed profit, WhatsApp +44 7700 900123"),
+    ("SEO Team", "Get 10,000 Instagram followers for $9. Fast delivery. cheap-followers.top"),
+]
 
 
 def classifier_text(name: str, message: str) -> str:

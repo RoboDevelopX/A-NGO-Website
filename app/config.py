@@ -115,7 +115,7 @@ class Settings(BaseSettings):
     ml_related_posts: bool = True
     ml_event_matching: bool = True
     ml_spam_filter: bool = True
-    spam_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
+    spam_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
     spam_model_path: Path = BASE_DIR / "data" / "spam_model.joblib"
 
     _ephemeral_secret: str | None = PrivateAttr(default=None)

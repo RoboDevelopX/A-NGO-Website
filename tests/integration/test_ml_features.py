@@ -59,14 +59,14 @@ def test_spam_is_saved_flagged_and_not_emailed(ml_client, ml_app):
     # The sender sees the normal success page; nothing tells a bot it was caught.
     assert response.status_code == 303 and response.headers["location"] == "/thanks"
     sub = _only_submission(ml_app)
-    assert sub.is_spam is True and sub.spam_score >= 0.8
+    assert sub.is_spam is True and sub.spam_score >= ml_app.state.spam_filter.threshold
     assert ml_app.state.email_service.sent == []
 
 
 def test_genuine_message_is_scored_accepted_and_emailed(ml_client, ml_app):
     submit(ml_client, "/volunteer", VALID_VOLUNTEER)
     sub = _only_submission(ml_app)
-    assert sub.is_spam is False and 0 <= sub.spam_score < 0.8
+    assert sub.is_spam is False and 0 <= sub.spam_score < ml_app.state.spam_filter.threshold
     assert len(ml_app.state.email_service.sent) == 1
 
 
