@@ -35,3 +35,18 @@ def client(app) -> Iterator[TestClient]:
     # The context manager runs the lifespan, which creates the tables.
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def db_session(client, app):
+    """A session on the test app's database (tables already created by the client fixture)."""
+    with app.state.db.session() as session:
+        yield session
+
+
+@pytest.fixture
+def seeded(db_session):
+    from app.seed import seed
+
+    seed(db_session)
+    return db_session

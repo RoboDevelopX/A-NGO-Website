@@ -8,7 +8,14 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from app.config import BASE_DIR, BRAND
-from app.formatting import format_compact_number, format_date, format_datetime, format_inr
+from app.formatting import (
+    format_compact_number,
+    format_date,
+    format_datetime,
+    format_inr,
+    reading_time_minutes,
+    to_ist,
+)
 
 # (label, path). Donate is rendered separately as the primary CTA.
 NAV_ITEMS: list[tuple[str, str]] = [
@@ -45,6 +52,8 @@ env.filters["inr"] = format_inr
 env.filters["compact"] = format_compact_number
 env.filters["date"] = format_date
 env.filters["datetime"] = format_datetime
+env.filters["reading_time"] = reading_time_minutes
+env.filters["ist"] = to_ist
 env.globals["is_active"] = _is_active
 
 

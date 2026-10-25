@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import section_header, button %}
+{% set page_title = "About us" %}
+{% set page_description = "Our mission, our approach to teaching children to read, the people behind " ~ brand.name ~ " and exactly how your donations are used." %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">About us</p>
+    <h1>Children who can read can learn anything</h1>
+    <p class="lead">{{ brand.description }} We started in {{ brand.founded_year }} with 22 children in a borrowed courtyard.</p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="mission-title">
+  <div class="container">
+    <div class="grid grid--2">
+      <div>
+        <p class="eyebrow">Mission</p>
+        <h2 id="mission-title">Why we exist</h2>
+        <p class="lead">{{ brand.mission }}</p>
+      </div>
+      <div>
+        <p class="eyebrow">Vision</p>
+        <h2>The India we're working towards</h2>
+        <p class="lead">A country where the place a child is born no longer decides whether they can read by the age of eleven.</p>
+      </div>
+    </div>
+    <h2 class="mt-6">Our values</h2>
+    <ul class="grid grid--4">
+      {% for title, text in values %}
+      <li class="card"><div class="card__body"><h3 class="card__title">{{ title }}</h3><p>{{ text }}</p></div></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="section section--tint" aria-labelledby="problem-title">
+  <div class="container">
+    <div class="split">
+      <div>
+        {{ section_header("Too many children are in school but not learning", eyebrow="The problem", id="problem-title") }}
+        <ul class="stack">
+          {% for point in problem_points %}<li>{{ point }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h2 id="approach-title">Our approach</h2>
+        <ol class="stack">
+          {% for title, text in approach_steps %}
+          <li><strong>{{ title }}.</strong> {{ text }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="timeline-title">
+  <div class="container container--narrow">
+    {{ section_header("Twelve years, one centre at a time", eyebrow="Milestones", id="timeline-title") }}
+    <ol class="timeline">
+      {% for m in milestones %}
+      <li>
+        <span class="timeline__year">{{ m.year }}</span>
+        <h3>{{ m.title }}</h3>
+        <p class="mb-0">{{ m.text }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<section class="section section--tint" aria-labelledby="team-title">
+  <div class="container">
+    {{ section_header("The people behind the work", eyebrow="Our team", lead="70% of our staff, and every one of our teachers, come from the districts where we work.", id="team-title") }}
+    <ul class="grid grid--4">
+      {% for person in team %}
+      <li class="card">
+        <div class="card__body">
+          <img class="avatar avatar--lg" src="{{ person.image }}" alt="Portrait of {{ person.name }}" width="96" height="96" loading="lazy">
+          <h3 class="card__title">{{ person.name }}</h3>
+          <p class="card__meta mb-0">{{ person.role }}</p>
+          <p>{{ person.bio }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="funds" aria-labelledby="funds-title">
+  <div class="container">
+    <div class="split split--sidebar">
+      <div>
+        {{ section_header("How funds are used", eyebrow="Transparency", lead="Where every ₹100 you give goes, based on our most recent audited accounts (illustrative figures).", id="funds-title") }}
+        <figure class="mb-0">
+          <ul class="bar-chart">
+            {% for line in funds %}
+            <li class="bar-chart__row">
+              <span class="bar-chart__label"><span>{{ line.label }}</span><span>{{ line.percent }}%</span></span>
+              <svg class="bar-chart__track" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <rect class="bar-chart__bg" width="100" height="10" rx="2"/>
+                <rect class="bar-chart__fill{% if loop.index > 4 %} bar-chart__fill--accent{% endif %}" width="{{ line.percent }}" height="10" rx="2"/>
+              </svg>
+              <span class="field__hint">{{ line.detail }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          <figcaption class="text-muted mt-4">Programme costs (teal) make up {{ funds[:4] | sum(attribute="percent") }}% of spending. Fundraising and administration (saffron) make up {{ funds[4:] | sum(attribute="percent") }}%.</figcaption>
+        </figure>
+      </div>
+      <aside class="form-panel">
+        <h2 class="h3">See it for yourself</h2>
+        <p>We publish audited accounts and centre-by-centre learning results every September. Donors can visit any centre with a week's notice.</p>
+        {{ button("Donate", href="/donate", variant="accent") }}
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

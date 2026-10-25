@@ -124,6 +124,10 @@ ol {
   padding-left: 1.25rem;
 }
 
+figure {
+  margin: 0;
+}
+
 hr {
   border: 0;
   border-top: 1px solid var(--color-border);
@@ -1466,4 +1470,36 @@ ol.grid {
 
 .site-footer ul.cluster {
   display: flex;
+}
+
+.h3 {
+  font-size: var(--text-xl);
+}
+
+[data-center] {
+  justify-content: center;
+}
+
+.section--tint .stat__value,
+.card .stat__value {
+  color: var(--color-primary);
+  font-size: var(--text-3xl);
+}
+
+/* The Donate CTA keeps its button styling inside the nav. */
+.site-nav a.btn {
+  display: flex;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+.site-nav a.btn--accent:hover {
+  background: var(--color-accent-dark);
+  color: var(--color-ink);
+}
+
+@media (min-width: 56rem) {
+  .site-nav a.btn {
+    display: inline-flex;
+  }
 }

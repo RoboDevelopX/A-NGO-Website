@@ -1,0 +1,44 @@
+{# Cards for database-backed content, shared by the homepage, listings and detail pages. #}
+{% from "macros/icons.html" import icon %}
+
+{% macro event_date(event) %}
+{% set local = event.starts_at | ist %}
+<span class="event-date{% if event.is_past() %} event-date--past{% endif %}" aria-hidden="true">
+  <span class="event-date__day">{{ local.day }}</span>
+  <span class="event-date__month">{{ local.strftime("%b") }}</span>
+</span>
+{% endmacro %}
+
+{% macro event_card(event, heading_level=3) %}
+<article class="card card--link">
+  <div class="card__body">
+    <div class="event-row">
+      {{ event_date(event) }}
+      <div class="stack">
+        <h{{ heading_level }} class="card__title"><a href="/events/{{ event.slug }}">{{ event.title }}</a></h{{ heading_level }}>
+        <ul class="meta-list mb-0">
+          <li><time datetime="{{ (event.starts_at | ist).isoformat() }}">{{ event.starts_at | datetime }}</time></li>
+          <li>{{ event.short_location }}</li>
+        </ul>
+      </div>
+    </div>
+    <p class="mb-0">{{ event.summary }}</p>
+  </div>
+</article>
+{% endmacro %}
+
+{% macro post_card(post, heading_level=3) %}
+<article class="card card--link">
+  {% if post.image %}
+  <div class="card__media"><img src="{{ post.image }}" alt="{{ post.image_alt }}" width="800" height="450" loading="lazy"></div>
+  {% endif %}
+  <div class="card__body">
+    <ul class="meta-list mb-0">
+      <li><time datetime="{{ post.published_at.date().isoformat() }}">{{ post.published_at | date }}</time></li>
+      <li>{{ post.body | reading_time }} min read</li>
+    </ul>
+    <h{{ heading_level }} class="card__title"><a href="/blog/{{ post.slug }}">{{ post.title }}</a></h{{ heading_level }}>
+    <p class="mb-0">{{ post.excerpt }}</p>
+  </div>
+</article>
+{% endmacro %}

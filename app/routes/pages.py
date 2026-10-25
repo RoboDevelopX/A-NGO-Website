@@ -2,18 +2,55 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
-from fastapi.responses import PlainTextResponse, Response
+from typing import Annotated
 
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import PlainTextResponse, Response
+from sqlalchemy.orm import Session
+
+from app import content
 from app.config import BRAND
+from app.db import get_db
+from app.services.content import latest_posts, upcoming_events
 from app.templating import render
 
 router = APIRouter()
+DB = Annotated[Session, Depends(get_db)]
 
 
 @router.get("/")
-def home(request: Request):
-    return render(request, "pages/home.html")
+def home(request: Request, db: DB):
+    return render(
+        request,
+        "pages/home.html",
+        {
+            "hero_image": content.HERO_IMAGE,
+            "stats": content.IMPACT_STATS,
+            "programmes": content.PROGRAMMES,
+            "gallery": content.GALLERY,
+            "testimonials": content.TESTIMONIALS,
+            "donation_impact": content.DONATION_IMPACT,
+            "events": upcoming_events(db, limit=3),
+            "posts": latest_posts(db, limit=3),
+        },
+    )
+
+
+@router.get("/about")
+def about(request: Request):
+    return render(
+        request,
+        "pages/about.html",
+        {
+            "values": content.VALUES,
+            "problem_points": content.PROBLEM_POINTS,
+            "approach_steps": content.APPROACH_STEPS,
+            "milestones": content.MILESTONES,
+            "team": content.TEAM,
+            "funds": content.FUNDS_BREAKDOWN,
+            "stats": content.IMPACT_STATS,
+        },
+    )
 
 
 @router.get("/styleguide")

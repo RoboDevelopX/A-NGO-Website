@@ -1,9 +1,153 @@
 {% extends "base.html" %}
+{% from "macros/ui.html" import section_header, button %}
+{% from "macros/cards.html" import event_card, post_card %}
+{% from "macros/icons.html" import icon %}
 {% block content %}
-<section class="hero">
+<section class="hero" aria-labelledby="hero-title">
+  <div class="container split">
+    <div>
+      <p class="eyebrow">Since {{ brand.founded_year }} · Rajasthan and Jharkhand</p>
+      <h1 id="hero-title">{{ brand.tagline }}</h1>
+      <p class="lead">{{ brand.mission }}</p>
+      <div class="cluster hero__actions">
+        {{ button("Donate", href="/donate", variant="accent", size="lg") }}
+        {{ button("Volunteer with us", href="/volunteer", variant="outline", size="lg") }}
+      </div>
+      <p class="text-muted mt-4">Free for every child · Audited accounts published every year</p>
+    </div>
+    <div class="hero__art">
+      <img src="{{ hero_image.src }}" alt="{{ hero_image.alt }}" width="800" height="600" fetchpriority="high">
+    </div>
+  </div>
+</section>
+
+<section class="section section--dark" aria-labelledby="impact-title">
   <div class="container">
-    <h1>{{ brand.tagline }}</h1>
-    <p class="lead">{{ brand.mission }}</p>
+    {{ section_header("Our impact so far", eyebrow="By the numbers", center=True, id="impact-title") }}
+    <ul class="stats">
+      {% for stat in stats %}
+      <li class="stat">
+        {# The final number is rendered server-side; JS only animates it if motion is allowed. #}
+        <span class="stat__value" data-count-to="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value | compact }}{{ stat.suffix }}</span>
+        <span class="stat__label">{{ stat.label }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="what-title">
+  <div class="container">
+    {{ section_header("What we do", eyebrow="Our programmes", lead="Four programmes, one goal: every child reading, writing and reasoning with confidence by the age of 11.", id="what-title") }}
+    <div class="grid grid--4">
+      {% for programme in programmes %}
+      <article class="card">
+        <div class="card__body">
+          <span class="card__icon">{{ icon(programme.icon) }}</span>
+          <h3 class="card__title">{{ programme.title }}</h3>
+          <p>{{ programme.text }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    <p class="mt-6"><a href="/about">Read about our approach<span class="visually-hidden"> to teaching</span></a></p>
+  </div>
+</section>
+
+<section class="section section--tint" aria-labelledby="give-title">
+  <div class="container">
+    {{ section_header("What your gift does", eyebrow="Donate", lead="Every rupee is tracked and reported. Here's what a single gift pays for.", id="give-title") }}
+    <ul class="grid grid--4">
+      {% for amount, impact in donation_impact.items() %}
+      <li class="card">
+        <div class="card__body">
+          <p class="stat__value mb-0">{{ amount | inr }}</p>
+          <p class="mb-0">{{ impact }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="cluster mt-6">
+      {{ button("Give now", href="/donate", variant="accent", size="lg") }}
+      <a href="/about#funds">See how funds are used</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="gallery-title">
+  <div class="container">
+    {{ section_header("Life at our centres", eyebrow="Gallery", id="gallery-title") }}
+    <ul class="gallery">
+      {% for image in gallery %}
+      <li>
+        <figure>
+          <img src="{{ image.src }}" alt="{{ image.alt }}" width="800" height="600" loading="lazy">
+          <figcaption>{{ image.caption }}</figcaption>
+        </figure>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="section section--tint" aria-labelledby="voices-title">
+  <div class="container">
+    {{ section_header("Voices from our community", eyebrow="Testimonials", id="voices-title") }}
+    <div class="grid grid--3">
+      {% for t in testimonials %}
+      <figure class="testimonial">
+        <blockquote><p class="mb-0">&ldquo;{{ t.quote }}&rdquo;</p></blockquote>
+        <figcaption>
+          <img class="avatar" src="{{ t.image }}" alt="{{ t.image_alt }}" width="48" height="48" loading="lazy">
+          <span><strong>{{ t.name }}</strong>{{ t.role }}</span>
+        </figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="events-title">
+  <div class="container">
+    <div class="split split--sidebar">
+      <div>
+        {{ section_header("Upcoming events", eyebrow="Join us", id="events-title") }}
+        {% if events %}
+        <div class="grid">
+          {% for event in events %}{{ event_card(event) }}{% endfor %}
+        </div>
+        {% else %}
+        <p>No events are scheduled right now. Check back soon.</p>
+        {% endif %}
+        <p class="mt-6"><a href="/events">See all events</a></p>
+      </div>
+      <aside class="form-panel" aria-labelledby="volunteer-cta-title">
+        <h2 id="volunteer-cta-title" class="h3">Give your time</h2>
+        <p>Teach a reading group, mentor a girl through Class 9, or help from home with design and data. Tell us what you enjoy and we'll suggest where to start.</p>
+        {{ button("Become a volunteer", href="/volunteer", variant="primary") }}
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tint" aria-labelledby="posts-title">
+  <div class="container">
+    {{ section_header("Stories from the field", eyebrow="Latest posts", id="posts-title") }}
+    <div class="grid grid--3">
+      {% for post in posts %}{{ post_card(post) }}{% endfor %}
+    </div>
+    <p class="mt-6"><a href="/blog">Read all stories</a></p>
+  </div>
+</section>
+
+<section class="section section--dark" aria-labelledby="cta-title">
+  <div class="container text-center container--narrow">
+    <h2 id="cta-title">Help one more child learn to read</h2>
+    <p class="lead">₹1,000 a month keeps five children in evening classes for a year.</p>
+    <div class="cluster mt-6" data-center>
+      {{ button("Donate monthly", href="/donate?frequency=monthly", variant="accent", size="lg") }}
+      {{ button("Volunteer", href="/volunteer", variant="outline btn--on-dark", size="lg") }}
+    </div>
   </div>
 </section>
 {% endblock %}
