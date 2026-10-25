@@ -55,7 +55,7 @@ def test_valid_volunteer_submission_is_saved_emailed_and_redirected(client, app)
 def test_thanks_page_suggests_upcoming_events_for_volunteers(client, seeded):
     submit(client, "/volunteer", VALID_VOLUNTEER)
     html = client.get("/thanks").text
-    assert "Upcoming events you could join" in html or "Suggested events" in html
+    assert "Events that match your interests" in html or "Upcoming events you could join" in html
     assert "/events/" in html
 
 

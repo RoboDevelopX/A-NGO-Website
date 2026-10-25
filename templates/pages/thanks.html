@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/ui.html" import button %}
 {% from "macros/cards.html" import event_card %}
+{% from "macros/icons.html" import icon %}
 {% set page_title = "Thank you" %}
 {% block content %}
 <section class="page-hero">
@@ -23,7 +24,14 @@
       {% for item in suggested_events %}
       <div class="stack">
         {{ event_card(item.event if item.event is defined else item) }}
-        {% if item.reasons is defined and item.reasons %}<p class="field__hint mt-0">Why we suggested this: {{ item.reasons | join("; ") }}</p>{% endif %}
+        {% if item.reasons is defined and item.reasons %}
+        <div class="match-reasons">
+          <p class="match-reasons__title">Why we suggested this</p>
+          <ul class="match-reasons__list" role="list">
+            {% for reason in item.reasons %}<li>{{ icon("check", size=16) }}<span>{{ reason }}</span></li>{% endfor %}
+          </ul>
+        </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>

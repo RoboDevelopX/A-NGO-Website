@@ -41,6 +41,7 @@ from app.security import (
 )
 from app.services.content import upcoming_events
 from app.services.email import send_safely
+from app.services.ml import suggest_events
 from app.services.submissions import (
     confirmation_email,
     first_name,
@@ -113,9 +114,17 @@ async def _handle_post(
         context = _form_context(kind, values, friendly_errors(exc))
         return render(request, config["template"], context, status_code=422)
 
+    verdict = request.app.state.spam_filter.check(data.name, data.message)
+    if verdict.is_spam:
+        logger.info("%s submission flagged as likely spam (score %.2f)", kind, verdict.score)
     secret = request.app.state.settings.resolved_secret_key()
     submission = save_submission(
-        db, data=data, nonce=nonce, ip_hash=hash_ip(client_ip(request), secret)
+        db,
+        data=data,
+        nonce=nonce,
+        ip_hash=hash_ip(client_ip(request), secret),
+        spam_score=verdict.score,
+        is_spam=verdict.is_spam,
     )
     if submission is None:
         logger.info("Duplicate %s submission ignored", kind)
@@ -147,18 +156,33 @@ async def contact_submit(request: Request, form: CSRFForm, db: DB, background: B
     return await _handle_post("contact", request, form, db, background)
 
 
+def _volunteer_suggestions(request: Request, db: Session, submission: Submission | None) -> dict:
+    """Matched events (with reasons) when we can, otherwise simply the next few events."""
+    if submission is not None and request.app.state.settings.ml_event_matching:
+        matches = suggest_events(db, submission, k=3)
+        if matches:
+            return {
+                "suggested_events": matches,
+                "suggested_title": "Events that match your interests",
+                "suggested_note": "Picked from what you told us you enjoy and when you're free.",
+            }
+    return {
+        "suggested_events": upcoming_events(db, limit=3),
+        "suggested_title": "Upcoming events you could join",
+    }
+
+
 @router.get("/thanks")
 def thanks(request: Request, db: DB):
     info = request.session.get("thanks") or {}
     kind = info.get("kind", "contact")
     submission = db.get(Submission, info["id"]) if info.get("id") else None
-    return render(
-        request,
-        "pages/thanks.html",
-        {
-            "kind": kind,
-            "first_name": first_name(submission.name) if submission else None,
-            "suggested_events": upcoming_events(db, limit=3) if kind == "volunteer" else [],
-            "noindex": True,
-        },
-    )
+    context = {
+        "kind": kind,
+        "first_name": first_name(submission.name) if submission else None,
+        "suggested_events": [],
+        "noindex": True,
+    }
+    if kind == "volunteer":
+        context |= _volunteer_suggestions(request, db, submission)
+    return render(request, "pages/thanks.html", context)

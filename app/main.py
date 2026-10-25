@@ -22,6 +22,7 @@ from app.routes import admin, blog, donate, events, forms, pages, seo
 from app.security import RateLimiter, SecureHeadersMiddleware
 from app.services.content import posts_sharing_tags
 from app.services.email import build_email_service
+from app.services.ml import TfidfRelatedPosts, admin_suggestions, build_spam_filter
 from app.services.payments import MockPaymentProvider
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -45,10 +46,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.email_service = build_email_service(settings)
     # The only provider that exists. Swapping in a real one is a change to this line.
     app.state.payment_provider = MockPaymentProvider()
-    # Related posts: tag overlap for now; stage (g) swaps in the TF-IDF recommender.
-    app.state.related_posts = posts_sharing_tags
-    # Per-row hints in the admin table (event suggestions); filled in by stage (g).
-    app.state.admin_suggestions = lambda db, items: {}
+    # ML features, each behind a flag with a plain fallback (see app/services/ml.py).
+    app.state.related_posts = (
+        TfidfRelatedPosts() if settings.ml_related_posts else posts_sharing_tags
+    )
+    app.state.admin_suggestions = (
+        admin_suggestions if settings.ml_event_matching else (lambda db, items: {})
+    )
+    app.state.spam_filter = build_spam_filter(settings)
     app.state.rate_limiter = RateLimiter(
         settings.rate_limit_max, settings.rate_limit_window_seconds
     )

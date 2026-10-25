@@ -25,6 +25,7 @@ ignore = [
 "app/content.py" = ["E501"]  # long copy strings read better unwrapped
 "app/seed_data.py" = ["E501"]
 "scripts/make_illustrations.py" = ["E501"]
+"app/ml/spam_data.py" = ["E501", "S311"]  # template strings; seeded RNG for reproducible data
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
