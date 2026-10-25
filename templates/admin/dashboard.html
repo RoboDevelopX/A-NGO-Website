@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import badge, pagination %}
+{% set page_title = "Admin: submissions" %}
+{% block content %}
+<section class="page-hero">
+  <div class="container cluster admin-header">
+    <div>
+      <p class="eyebrow">Admin</p>
+      <h1>Submissions</h1>
+    </div>
+    <form method="post" action="/admin/logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+      <button class="btn btn--outline btn--sm" type="submit">Log out {{ admin }}</button>
+    </form>
+  </div>
+</section>
+
+<section class="section admin">
+  <div class="container stack">
+    <ul class="grid grid--4 admin-stats" aria-label="Summary">
+      <li class="card"><div class="card__body"><span class="stat__value">{{ stats.new }}</span><span>new submissions</span></div></li>
+      <li class="card"><div class="card__body"><span class="stat__value">{{ stats.contacted }}</span><span>contacted</span></div></li>
+      <li class="card"><div class="card__body"><span class="stat__value">{{ stats.spam }}</span><span>flagged as spam</span></div></li>
+      <li class="card"><div class="card__body"><span class="stat__value">{{ stats.donated_rupees | inr }}</span><span>in {{ stats.donations }} mock donations · {{ stats.rsvps }} RSVPs</span></div></li>
+    </ul>
+
+    <form class="form-panel admin-filters" method="get" action="/admin" role="search" aria-label="Filter submissions">
+      <div class="field">
+        <label class="field__label" for="q">Search</label>
+        <input class="input" id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Name, email, message or interest">
+      </div>
+      <div class="field">
+        <label class="field__label" for="status">Status</label>
+        <select class="select" id="status" name="status">
+          {% for s in status_filters %}<option value="{{ s }}"{% if s == filters.status %} selected{% endif %}>{{ s | capitalize }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" for="kind">Type</label>
+        <select class="select" id="kind" name="kind">
+          {% for k in kind_filters %}<option value="{{ k }}"{% if k == filters.kind %} selected{% endif %}>{{ k | capitalize }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" for="spam">Spam</label>
+        <select class="select" id="spam" name="spam">
+          {% for value, label in [("hide", "Hide spam"), ("only", "Spam only"), ("include", "Show everything")] %}<option value="{{ value }}"{% if value == filters.spam %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="cluster admin-filters__actions">
+        <button class="btn btn--primary btn--sm" type="submit">Apply</button>
+        <a class="btn btn--outline btn--sm" href="/admin">Reset</a>
+        <a class="btn btn--outline btn--sm" href="{{ export_url }}">Export CSV</a>
+      </div>
+    </form>
+
+    <p class="text-muted" aria-live="polite">{{ total }} {{ "submission" if total == 1 else "submissions" }}{% if filters.q %} matching “{{ filters.q }}”{% endif %}</p>
+
+    {% if items %}
+    <div class="table-wrap">
+      <table class="table">
+        <caption class="visually-hidden">Volunteer and contact submissions, newest first</caption>
+        <thead>
+          <tr><th scope="col">Received</th><th scope="col">Person</th><th scope="col">Details</th><th scope="col">Message</th><th scope="col">Status</th></tr>
+        </thead>
+        <tbody>
+          {% for s in items %}
+          <tr>
+            <td>{{ s.created_at | datetime }}</td>
+            <td>
+              <strong>{{ s.name }}</strong><br>
+              <a href="mailto:{{ s.email }}">{{ s.email }}</a>
+              {% if s.phone %}<br>{{ s.phone }}{% endif %}
+            </td>
+            <td>
+              {{ badge(s.kind | capitalize, "accent" if s.kind == "volunteer" else None) }}
+              {% if s.is_spam %}{{ badge("Spam " ~ ("%.0f%%" % (s.spam_score * 100) if s.spam_score is not none else ""), "error") }}{% endif %}
+              {% if s.kind == "volunteer" %}
+                <p class="mb-0 mt-4">{% for i in s.interest_list %}{{ interest_labels.get(i, i) }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+                <p class="mb-0 text-muted">{{ availability_labels.get(s.availability, s.availability) }}</p>
+                {% set hint = suggestions.get(s.id) %}
+                {% if hint %}<p class="mb-0 field__hint">Suggested: <a href="/events/{{ hint.event.slug }}">{{ hint.event.title }}</a></p>{% endif %}
+              {% else %}
+                <p class="mb-0 mt-4">{{ topic_labels.get(s.topic, s.topic) }}</p>
+              {% endif %}
+            </td>
+            <td class="admin-message">
+              {% if s.message | length > 90 %}
+              <details><summary>{{ s.message[:90] }}…</summary><p class="mb-0 pre-line">{{ s.message }}</p></details>
+              {% else %}<span class="pre-line">{{ s.message }}</span>{% endif %}
+            </td>
+            <td>
+              <form class="admin-status" method="post" action="/admin/submissions/{{ s.id }}/status">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+                <input type="hidden" name="return_to" value="{{ return_to }}">
+                <label class="visually-hidden" for="status-{{ s.id }}">Status for {{ s.name }}</label>
+                <select class="select" id="status-{{ s.id }}" name="status">
+                  {% for st in statuses %}<option value="{{ st }}"{% if st == s.status %} selected{% endif %}>{{ st | capitalize }}</option>{% endfor %}
+                </select>
+                <button class="btn btn--outline btn--sm" type="submit">Save<span class="visually-hidden"> status for {{ s.name }}</span></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {{ pagination(page, total_pages, url_for_page) }}
+    {% else %}
+    <p class="lead">No submissions match these filters.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

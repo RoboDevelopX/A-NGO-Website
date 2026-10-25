@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "macros/ui.html" import alert %}
+{% set page_title = "Admin login" %}
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <div class="form-panel">
+      <h1 class="h3">Admin login</h1>
+      {% if not enabled %}
+        {% call alert("warning", "Admin login is turned off") %}
+        <p>Set <code>ADMIN_PASSWORD_HASH</code> in your environment to enable it. <code>make setup</code> creates one for you, or run <code>make admin-password</code>.</p>
+        {% endcall %}
+      {% endif %}
+      {% if error %}{% call alert("error") %}<p>{{ error }}</p>{% endcall %}{% endif %}
+      <form class="form" method="post" action="/admin/login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+        <div class="field">
+          <label class="field__label" for="f-username">Username</label>
+          <input class="input" id="f-username" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label class="field__label" for="f-password">Password</label>
+          <input class="input" id="f-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn--primary" type="submit">Log in</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

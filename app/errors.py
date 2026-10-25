@@ -6,6 +6,7 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import RedirectResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.templating import render
@@ -25,6 +26,12 @@ _MESSAGES = {
 
 
 def register_error_handlers(app: FastAPI) -> None:
+    from app.routes.admin import AdminLoginRequired
+
+    @app.exception_handler(AdminLoginRequired)
+    async def admin_login_required(request: Request, exc: AdminLoginRequired):
+        return RedirectResponse("/admin/login", status_code=303)
+
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException):
         title, message = _MESSAGES.get(exc.status_code, ("Something went wrong", str(exc.detail)))
