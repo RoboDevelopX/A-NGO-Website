@@ -96,3 +96,42 @@ def test_markup_is_stored_verbatim_and_escaped_on_output():
         {**VALID_VOLUNTEER, "message": "<script>alert(1)</script> I can teach on Sundays."}
     )
     assert form.message.startswith("<script>")
+
+
+# --- Donations ------------------------------------------------------------------
+
+from app.schemas import DonationForm  # noqa: E402
+
+DONOR = {
+    "frequency": "one_time",
+    "amount_choice": "1000",
+    "name": "Asha Nair",
+    "email": "a@example.com",
+}
+
+
+@pytest.mark.parametrize(
+    ("choice", "custom", "expected"),
+    [
+        ("500", "", 500),
+        ("5000", "999", 5000),
+        ("custom", "2500", 2500),
+        ("custom", "₹1,00,000", 100000),
+    ],
+)
+def test_donation_amounts(choice, custom, expected):
+    form = DonationForm.model_validate({**DONOR, "amount_choice": choice, "custom_amount": custom})
+    assert form.amount_rupees == expected
+
+
+@pytest.mark.parametrize("custom", ["", "99", "500001", "12.50", "-500", "abc"])
+def test_invalid_custom_amounts(custom):
+    with pytest.raises(ValidationError) as exc_info:
+        DonationForm.model_validate({**DONOR, "amount_choice": "custom", "custom_amount": custom})
+    assert set(friendly_errors(exc_info.value)) == {"custom_amount"}
+
+
+def test_donation_rejects_unknown_preset_and_frequency():
+    with pytest.raises(ValidationError) as exc_info:
+        DonationForm.model_validate({**DONOR, "amount_choice": "777", "frequency": "weekly"})
+    assert set(friendly_errors(exc_info.value)) == {"amount_choice", "frequency"}

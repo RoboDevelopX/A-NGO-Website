@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import field, error_summary %}
+{% from "macros/ui.html" import alert %}
+{% set page_title = "Donate" %}
+{% set page_description = "Give once or monthly to keep children in rural India learning to read. " ~ brand.name ~ " publishes exactly how every rupee is used." %}
+{% block head %}<script src="/static/js/donate.js" defer></script>{% endblock %}
+{% block banner %}{% include "partials/demo_banner.html" %}{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Donate</p>
+    <h1>Give a child the gift of reading</h1>
+    <p class="lead">₹1,000 keeps five children in evening classes for a month. Monthly gifts help us plan teacher stipends a year ahead.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split split--sidebar">
+    <div class="form-panel">
+      {% if rate_limited %}
+      {% call alert("error", "Too many attempts") %}<p>Please wait a few minutes before trying again.</p>{% endcall %}
+      {% endif %}
+      {% if declined_message %}
+      {% call alert("error", "Payment declined") %}<p>{{ declined_message }} Nothing has been charged. You can try a different amount.</p>{% endcall %}
+      {% endif %}
+      <form class="form" method="post" action="/donate" novalidate data-validate data-donate-form>
+        {{ error_summary(errors) }}
+        {% include "partials/form_security.html" %}
+
+        <fieldset class="fieldset">
+          <legend class="fieldset__legend">How often would you like to give?</legend>
+          <div class="segmented" id="f-frequency">
+            <label><input type="radio" name="frequency" value="one_time"{% if values.frequency != "monthly" %} checked{% endif %}><span>One-time</span></label>
+            <label><input type="radio" name="frequency" value="monthly"{% if values.frequency == "monthly" %} checked{% endif %}><span>Monthly</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="fieldset{% if errors.amount_choice %} fieldset--invalid{% endif %}" data-choice-group="amount_choice" data-required="true"
+                  data-msg-required="{{ messages.amount_choice.required }}" aria-describedby="f-amount_choice-error">
+          <legend class="fieldset__legend">Choose an amount</legend>
+          <span class="field__error" id="f-amount_choice-error">{% if errors.amount_choice %}<span class="visually-hidden">Error: </span>{{ errors.amount_choice }}{% endif %}</span>
+          <div class="amount-grid">
+            {% for amount, impact in presets %}
+            <label class="choice amount-option" for="{{ 'f-amount_choice' if loop.first else 'f-amount_choice-' ~ loop.index0 }}">
+              <input type="radio" id="{{ 'f-amount_choice' if loop.first else 'f-amount_choice-' ~ loop.index0 }}" name="amount_choice" value="{{ amount }}"{% if values.amount_choice == amount | string %} checked{% endif %}>
+              <span class="amount-option__value">{{ amount | inr }}</span>
+              <span class="choice__hint">{{ impact }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <label class="choice mt-0" for="f-amount_choice-custom">
+            <input type="radio" id="f-amount_choice-custom" name="amount_choice" value="custom"{% if values.amount_choice == "custom" %} checked{% endif %}>
+            <span>Other amount</span>
+          </label>
+        </fieldset>
+
+        {{ field("custom_amount", "Your amount in rupees", values.custom_amount, error=errors.custom_amount,
+                 hint="Only needed if you chose Other amount. Whole rupees, from ₹" ~ donation_min ~ " to ₹5,00,000. Demo tip: ₹" ~ (decline_amount | inr(symbol=False)) ~ " always declines, so you can see the error path.",
+                 show_optional=False,
+                 attrs={"inputmode": "numeric", "autocomplete": "off", "data-kind": "amount", "data-min": donation_min, "data-max": donation_max,
+                        "data-msg-required": messages.custom_amount.required, "data-msg-invalid": messages.custom_amount.invalid, "maxlength": 9}) }}
+
+        <div class="form-row">
+          {{ field("name", "Full name", values.name, error=errors.name, required=True, hint="As it should appear on your receipt.",
+                   attrs={"autocomplete": "name", "maxlength": 80, "minlength": 2, "data-msg-required": messages.name.required, "data-msg-invalid": messages.name.invalid}) }}
+          {{ field("email", "Email address", values.email, type="email", error=errors.email, required=True, hint="We'll send your receipt here.",
+                   attrs={"autocomplete": "email", "maxlength": 254, "data-kind": "email", "data-msg-required": messages.email.required, "data-msg-invalid": messages.email.invalid, "spellcheck": "false"}) }}
+        </div>
+
+        <fieldset class="fieldset form-panel form-panel--demo" aria-describedby="demo-card-note">
+          <legend class="fieldset__legend">Payment details (demo)</legend>
+          <p class="field__hint" id="demo-card-note">These fields are read-only placeholders. They have no <code>name</code> attribute, so the browser never sends them and the server never sees card data.</p>
+          <div class="form-row">
+            <div class="field">
+              <label class="field__label" for="demo-card">Card number</label>
+              <input class="input" id="demo-card" value="4242 4242 4242 4242" readonly autocomplete="off" aria-describedby="demo-card-note">
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label class="field__label" for="demo-expiry">Expiry</label>
+                <input class="input" id="demo-expiry" value="12/34" readonly autocomplete="off">
+              </div>
+              <div class="field">
+                <label class="field__label" for="demo-cvc">CVC</label>
+                <input class="input" id="demo-cvc" value="123" readonly autocomplete="off">
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <p class="lead mb-0" data-donate-summary aria-live="polite"></p>
+        <div>
+          <button class="btn btn--accent btn--lg btn--block" type="submit" data-submit-label="Processing (demo)…" data-donate-button>Donate (demo)</button>
+        </div>
+      </form>
+    </div>
+
+    <aside class="stack" aria-labelledby="why-title">
+      <h2 id="why-title" class="h3">Where your money goes</h2>
+      <p>{{ programme_share }}% of every rupee goes straight to programmes. Our audited accounts are published every September. <a href="/about#funds">See the breakdown</a>.</p>
+      <ul class="stack">
+        <li>Donations are eligible for 50% tax deduction under Section 80G (fictional for this demo).</li>
+        <li>Monthly gifts can be cancelled at any time.</li>
+        <li>We never sell or share donor details.</li>
+      </ul>
+    </aside>
+  </div>
+</section>
+
+<section class="section section--tint" id="other-ways" aria-labelledby="other-ways-title">
+  <div class="container">
+    <p class="eyebrow">Other ways to give</p>
+    <h2 id="other-ways-title">Prefer a bank transfer or UPI?</h2>
+    <p class="lead">These details are <strong>fake</strong> and exist only for this demo. Do not send money to them.</p>
+    <div class="grid grid--3 mt-6">
+      <div class="card"><div class="card__body fake-details">
+        <h3 class="card__title">Bank transfer (NEFT/IMPS)</h3>
+        <span class="badge badge--accent">Demo only</span>
+        <dl class="receipt">
+          <dt>Account name</dt><dd>Akshar Foundation DEMO</dd>
+          <dt>Account no.</dt><dd>0000 0000 1234</dd>
+          <dt>IFSC</dt><dd>DEMO0000001</dd>
+          <dt>Bank</dt><dd>Example Bank (not real)</dd>
+        </dl>
+      </div></div>
+      <div class="card"><div class="card__body fake-details">
+        <h3 class="card__title">UPI</h3>
+        <span class="badge badge--accent">Demo only</span>
+        <dl class="receipt">
+          <dt>UPI ID</dt><dd>akshar.demo@example</dd>
+          <dt>Payee</dt><dd>Akshar Foundation DEMO</dd>
+        </dl>
+        <p class="field__hint">There is no QR code on purpose, so nobody can scan and pay by mistake.</p>
+      </div></div>
+      <div class="card"><div class="card__body">
+        <h3 class="card__title">Company and payroll giving</h3>
+        <p>CSR partnerships, employee matching and payroll giving. Tell us about your company and we'll send a proposal.</p>
+        <a class="btn btn--outline btn--sm" href="/contact">Talk to us about CSR</a>
+      </div></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

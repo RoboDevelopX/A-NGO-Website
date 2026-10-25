@@ -56,4 +56,11 @@
       observer.observe(el);
     });
   }
+
+  // Print buttons (inline onclick handlers would need 'unsafe-inline' in the CSP).
+  document.querySelectorAll("[data-print]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      window.print();
+    });
+  });
 })();

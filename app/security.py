@@ -192,6 +192,18 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def check_rate_limit(request: Request, scope: str = "form") -> int | None:
+    """Count this attempt. Returns seconds to wait if over the limit, else None.
+
+    Public forms share the "form" scope, so a bot can't get 8 tries per form.
+    """
+    limiter: RateLimiter = request.app.state.rate_limiter
+    key = f"{scope}:{client_ip(request)}"
+    if limiter.hit(key):
+        return None
+    return limiter.retry_after(key)
+
+
 def hash_ip(ip: str, secret: str) -> str:
     return hmac.new(secret.encode(), ip.encode(), hashlib.sha256).hexdigest()[:32]
 

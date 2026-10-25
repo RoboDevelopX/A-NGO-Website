@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% set page_title = "Your receipt" %}
+{% block banner %}{% include "partials/demo_banner.html" %}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <div class="form-panel receipt">
+      <p class="eyebrow">Demo receipt · not valid for tax purposes</p>
+      <h1>Thank you, {{ donation.donor_name.split(" ")[0] }}!</h1>
+      <p class="lead">Your {{ "monthly gift" if donation.frequency == "monthly" else "gift" }} of {{ donation.amount_rupees | inr }}{{ " a month" if donation.frequency == "monthly" else "" }} has been recorded. A copy of this receipt is on its way to {{ donation.donor_email }}.</p>
+      <dl>
+        <dt>Receipt number</dt><dd>{{ donation.receipt_no }}</dd>
+        <dt>Date</dt><dd>{{ donation.created_at | date }}</dd>
+        <dt>Amount</dt><dd>{{ donation.amount_rupees | inr }}{{ " (monthly)" if donation.frequency == "monthly" else "" }}</dd>
+        <dt>Donor</dt><dd>{{ donation.donor_name }}</dd>
+        <dt>Payment reference</dt><dd>{{ donation.provider_ref }} (mock)</dd>
+        <dt>Organisation</dt><dd>{{ brand.name }}<br><span class="field__hint">{{ brand.registration }}</span></dd>
+      </dl>
+      <div class="cluster mt-6 no-print">
+        <button class="btn btn--outline" type="button" data-print>Print receipt</button>
+        <a class="btn btn--primary" href="/">Back to the homepage</a>
+      </div>
+    </div>
+    <p class="mt-6 text-muted no-print">Want to do more? <a href="/volunteer">Volunteer with us</a> or <a href="/events">join an event</a>.</p>
+  </div>
+</section>
+{% endblock %}

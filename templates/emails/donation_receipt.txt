@@ -1,0 +1,16 @@
+Hi {{ first_name }},
+
+THIS IS A DEMO RECEIPT. No money was taken and it is not valid for tax purposes.
+
+Thank you for your {{ "monthly gift" if monthly else "gift" }} of {{ amount }}{{ " per month" if monthly else "" }} to {{ brand_name }}.
+
+Receipt number: {{ receipt_no }}
+Date:           {{ date }}
+Amount:         {{ amount }}{{ " (monthly)" if monthly else "" }}
+Organisation:   {{ brand_name }}, {{ registration }}
+
+{% if monthly %}You can cancel your monthly gift at any time by replying to this email.
+{% endif %}
+With gratitude,
+{{ brand_name }}
+{{ site_url }}

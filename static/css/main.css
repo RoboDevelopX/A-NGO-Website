@@ -1505,3 +1505,12 @@ ol.grid {
     display: inline-flex;
   }
 }
+
+.card__body > .badge {
+  align-self: flex-start;
+}
+
+.site-nav a.btn[aria-current="page"] {
+  text-decoration: none;
+  color: var(--color-ink);
+}

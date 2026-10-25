@@ -117,3 +117,28 @@ class FormToken(Base):
     token: Mapped[str] = mapped_column(String(64), primary_key=True)
     kind: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class Donation(Base):
+    """A *mock* donation. There are deliberately no card-related columns."""
+
+    __tablename__ = "donations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    receipt_no: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    amount_paise: Mapped[int] = mapped_column(Integer)
+    currency: Mapped[str] = mapped_column(String(3), default="INR")
+    frequency: Mapped[str] = mapped_column(String(20))  # "one_time" | "monthly"
+    donor_name: Mapped[str] = mapped_column(String(80))
+    donor_email: Mapped[str] = mapped_column(String(254))
+    provider: Mapped[str] = mapped_column(String(30))
+    provider_ref: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(20), index=True)  # "succeeded" | "declined"
+    failure_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # The form nonce: a unique key means a double-clicked Donate button records one gift.
+    idempotency_key: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+    @property
+    def amount_rupees(self) -> int:
+        return self.amount_paise // 100

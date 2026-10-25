@@ -9,17 +9,17 @@
 {{ ids | join(" ") }}
 {%- endmacro %}
 
-{% macro _label(name, label, required) %}
-<label class="field__label" for="f-{{ name }}">{{ label }}{% if not required %} <span class="field__optional">(optional)</span>{% endif %}</label>
+{% macro _label(name, label, required, show_optional=True) %}
+<label class="field__label" for="f-{{ name }}">{{ label }}{% if not required and show_optional %} <span class="field__optional">(optional)</span>{% endif %}</label>
 {% endmacro %}
 
 {% macro _error(name, error) %}
 <span class="field__error" id="f-{{ name }}-error">{% if error %}<span class="visually-hidden">Error: </span>{{ error }}{% endif %}</span>
 {% endmacro %}
 
-{% macro field(name, label, value="", type="text", error=None, required=False, hint=None, attrs={}) %}
+{% macro field(name, label, value="", type="text", error=None, required=False, hint=None, attrs={}, show_optional=True) %}
 <div class="field{% if error %} field--invalid{% endif %}">
-  {{ _label(name, label, required) }}
+  {{ _label(name, label, required, show_optional) }}
   {% if hint %}<span class="field__hint" id="f-{{ name }}-hint">{{ hint }}</span>{% endif %}
   {{ _error(name, error) }}
   <input class="input" id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value if value is not none else '' }}"

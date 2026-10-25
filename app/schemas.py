@@ -17,8 +17,10 @@ from enum import StrEnum
 from typing import Any, ClassVar
 
 from email_validator import EmailNotValidError, validate_email
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator, model_validator
 from pydantic_core import PydanticCustomError
+
+from app.services.payments import Frequency
 
 
 class Interest(StrEnum):
@@ -146,6 +148,33 @@ def clean_text(value: Any, *, multiline: bool = False) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def validate_name(value: Any) -> str:
+    name = clean_text(value)
+    if not name:
+        raise _err("required", FIELD_MESSAGES["name"])
+    if len(name) < 2 or len(name) > NAME_MAX or not _looks_like_name(name):
+        raise _err(
+            "name",
+            "Name must be 2 to 80 letters, and can include spaces, apostrophes, "
+            "hyphens and full stops",
+        )
+    return name
+
+
+def validate_email_address(value: Any) -> str:
+    email = clean_text(value)
+    if not email:
+        raise _err("required", FIELD_MESSAGES["email"])
+    if len(email) > EMAIL_MAX:
+        raise _err("email", CLIENT_MESSAGES["email"]["invalid"])
+    try:
+        # No DNS lookup: keeps validation fast, offline and deterministic in tests.
+        result = validate_email(email, check_deliverability=False)
+    except EmailNotValidError:
+        raise _err("email", CLIENT_MESSAGES["email"]["invalid"]) from None
+    return result.normalized
+
+
 class _PersonForm(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -161,31 +190,12 @@ class _PersonForm(BaseModel):
     @field_validator("name", mode="before")
     @classmethod
     def _validate_name(cls, value: Any) -> str:
-        name = clean_text(value)
-        if not name:
-            raise _err("required", FIELD_MESSAGES["name"])
-        if len(name) < 2 or len(name) > NAME_MAX or not _looks_like_name(name):
-            raise _err(
-                "name",
-                "Name must be 2 to 80 letters, and can include spaces, apostrophes, "
-                "hyphens and full stops",
-            )
-        return name
+        return validate_name(value)
 
     @field_validator("email", mode="before")
     @classmethod
     def _validate_email(cls, value: Any) -> str:
-        email = clean_text(value)
-        if not email:
-            raise _err("required", FIELD_MESSAGES["email"])
-        if len(email) > EMAIL_MAX:
-            raise _err("email", CLIENT_MESSAGES["email"]["invalid"])
-        try:
-            # No DNS lookup: keeps validation fast, offline and deterministic in tests.
-            result = validate_email(email, check_deliverability=False)
-        except EmailNotValidError:
-            raise _err("email", CLIENT_MESSAGES["email"]["invalid"]) from None
-        return result.normalized
+        return validate_email_address(value)
 
     @field_validator("phone", mode="before")
     @classmethod
@@ -230,6 +240,94 @@ class ContactForm(_PersonForm):
 
     message_min: ClassVar[int] = CONTACT_MESSAGE_MIN
     message_short_copy: ClassVar[str] = CLIENT_MESSAGES["message"]["contact_short"]
+
+
+# --- Donations ---------------------------------------------------------------
+
+PRESET_AMOUNTS = (500, 1000, 2500, 5000)  # rupees; impact copy lives in app/content.py
+DONATION_MIN, DONATION_MAX = 100, 500_000  # rupees; above ₹5 lakh we'd talk to the donor first
+
+FIELD_MESSAGES.update(
+    {
+        "amount_choice": "Choose an amount, or choose Other and enter your own",
+        "custom_amount": f"Enter a whole number of rupees between ₹{DONATION_MIN} and ₹5,00,000",
+        "frequency": "Choose one-time or monthly",
+    }
+)
+CLIENT_MESSAGES.update(
+    {
+        "amount_choice": {"required": FIELD_MESSAGES["amount_choice"]},
+        "custom_amount": {
+            "required": FIELD_MESSAGES["custom_amount"],
+            "invalid": FIELD_MESSAGES["custom_amount"],
+        },
+    }
+)
+
+
+def _parse_rupees(value: str) -> int | None:
+    """Accept "2500", "2,500" or "₹2,500". Whole rupees only: paise in a donation box are
+    almost always a typo."""
+    raw = clean_text(value).replace(",", "").removeprefix("₹").strip()
+    return int(raw) if raw.isdigit() else None
+
+
+class DonationForm(BaseModel):
+    """What the server receives from the donate page. Note: no card fields exist here at
+    all. The demo card inputs on the page have no ``name`` attribute, so browsers never
+    send them."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    frequency: Frequency
+    amount_choice: str
+    custom_amount: str = ""
+    name: str
+    email: str
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _validate_name(cls, value: Any) -> str:
+        return validate_name(value)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _validate_email(cls, value: Any) -> str:
+        return validate_email_address(value)
+
+    @field_validator("amount_choice", mode="before")
+    @classmethod
+    def _validate_choice(cls, value: Any) -> str:
+        choice = clean_text(value)
+        if choice not in {*map(str, PRESET_AMOUNTS), "custom"}:
+            raise _err("required", FIELD_MESSAGES["amount_choice"])
+        return choice
+
+    @model_validator(mode="after")
+    def _validate_custom_amount(self) -> DonationForm:
+        if self.amount_choice == "custom":
+            rupees = _parse_rupees(self.custom_amount)
+            if rupees is None or not DONATION_MIN <= rupees <= DONATION_MAX:
+                # Attach the error to the custom_amount field so it shows next to that input.
+                raise ValidationError.from_exception_data(
+                    "DonationForm",
+                    [
+                        {
+                            "type": PydanticCustomError(
+                                "friendly_amount", FIELD_MESSAGES["custom_amount"]
+                            ),
+                            "loc": ("custom_amount",),
+                            "input": self.custom_amount,
+                        }
+                    ],
+                )
+        return self
+
+    @property
+    def amount_rupees(self) -> int:
+        if self.amount_choice == "custom":
+            return _parse_rupees(self.custom_amount) or 0
+        return int(self.amount_choice)
 
 
 def friendly_errors(exc: ValidationError) -> dict[str, str]:

@@ -281,3 +281,9 @@ DONATION_IMPACT = {
     2500: "One month's stipend support for a teacher fellow",
     5000: "A library corner of 50 new books in three languages",
 }
+
+
+def programme_share() -> int:
+    """Percent of spending that goes to programmes (everything except fundraising and admin)."""
+    overheads = {"Fundraising", "Administration"}
+    return sum(line.percent for line in FUNDS_BREAKDOWN if line.label not in overheads)

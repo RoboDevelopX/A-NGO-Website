@@ -32,6 +32,7 @@ from app.schemas import (
     friendly_errors,
 )
 from app.security import (
+    check_rate_limit,
     client_ip,
     csrf_protected_form,
     hash_ip,
@@ -72,15 +73,6 @@ def _form_context(kind: str, values: dict | None = None, errors: dict | None = N
         "message_min": VOLUNTEER_MESSAGE_MIN if kind == "volunteer" else CONTACT_MESSAGE_MIN,
         "message_max": MESSAGE_MAX,
     }
-
-
-def check_rate_limit(request: Request, scope: str = "form") -> int | None:
-    """Count this attempt. Returns seconds to wait if over the limit, else None."""
-    limiter = request.app.state.rate_limiter
-    key = f"{scope}:{client_ip(request)}"
-    if limiter.hit(key):
-        return None
-    return limiter.retry_after(key)
 
 
 def _thanks_redirect(request: Request, kind: str, submission_id: int | None) -> RedirectResponse:
