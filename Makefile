@@ -57,7 +57,8 @@ format: install ## Auto-format and fix lint issues
 admin-password: install ## Print a bcrypt hash for a new admin password
 	$(PY) -m scripts.hash_password
 
-screenshots: install ## Capture README screenshots (needs Playwright + Chromium, and the site running)
+screenshots: install ## Capture README screenshots and the social card (optional Playwright)
+	$(PY) -m pip install -q -r requirements-tools.txt
 	$(PY) -m scripts.screenshots
 
 clean: ## Remove caches and generated data (keeps .env)

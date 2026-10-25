@@ -1,0 +1,3 @@
+# Optional: only needed for `make screenshots` (README images and the social card).
+# After installing, download a browser once with: .venv/bin/playwright install chromium
+playwright==1.63.0
